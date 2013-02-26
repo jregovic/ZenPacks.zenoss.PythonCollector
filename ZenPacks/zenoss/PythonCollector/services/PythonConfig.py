@@ -20,6 +20,7 @@ from Products.ZenRRD.zencommand import DataPointConfig
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSource
 
+known_point_properties = ('isrow', 'rrdmax', 'description','rrdmin','rrdtype','createCmd')
 
 class PythonDataSourceConfig(pb.Copyable, pb.RemoteCopy):
     device = None
@@ -53,6 +54,7 @@ def load_plugin_class(classname):
 
 
 class PythonConfig(CollectorConfigService):
+
     def _createDeviceProxy(self, device):
         collector = device.getPerformanceServer()
 
@@ -101,6 +103,15 @@ class PythonConfig(CollectorConfigService):
                     dp_config.rrdCreateCommand = dp.getRRDCreateCommand(collector)
                     dp_config.rrdMin = dp.rrdmin
                     dp_config.rrdMax = dp.rrdmax
+                    
+                    # Attach unknown properties to the dp_config
+                    for key in dp.propdict().keys():
+                         if key in known_point_properties:
+                             continue
+                         try:
+                             setattr(dp_config,key,getattr(dp,key))
+                         except Exception:
+                             pass 
 
                     datapoints.append(dp_config)
 
